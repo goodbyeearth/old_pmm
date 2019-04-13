@@ -19,7 +19,7 @@ def act_ex_communication(agent,obs):
 
 def t():
     # agent_list = [BaseAgent(),PlayerAgent(),BaseAgent(),SimpleAgent()]
-    agent_list = [SimpleAgent(),SimpleNoBombAgent(),SimpleAgent(),SimpleAgent()]
+    agent_list = [SimpleAgent(),SimpleAgent(),SimpleAgent(),SimpleNoBombAgent()]
     # agent_list = [BaseAgent(),BaseAgent(),BaseAgent(),PlayerAgent()]
     env = pommerman.make('PommeFFACompetitionFast-v0',agent_list)
     env.observation_space.shape = (8,8,19)
@@ -31,7 +31,8 @@ def t():
     model = Model(policy=policy,
                   env=env,
                   nsteps=16)
-    model.load('test_parameter/updates315000')
+    # model.load('test_parameter/updates315000')
+    model.load('parameter/parametertestupdates1')
     # env.seed(123)
     # random.seed(0)
     train_agent_rewards = 0
@@ -49,8 +50,8 @@ def t():
             env.render()
             # env.save_json('jsonjson')
             act3 = act_ex_communication(agent_list[3],state[3])
-            act2 = act_ex_communication(agent_list[2],state[2])
-            act0 = act_ex_communication(agent_list[0],state[0])
+            # act2 = act_ex_communication(agent_list[2],state[2])
+            # act0 = act_ex_communication(agent_list[0],state[0])
             act1 = act_ex_communication(agent_list[1],state[1])
             # act1,_,_,_ = model.act(featurize(state[1],1).reshape(-1,8,8,19))
             # action = [5,act1,5,act3]

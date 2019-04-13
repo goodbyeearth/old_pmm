@@ -52,7 +52,7 @@ _game_envs['retro'] = {
 
 def make_envs():
     def _thunk():
-        env = pommerman.make('PommeFFACompetition-v0',[BaseAgent(),BaseAgent(),BaseAgent(),SimpleNoBombAgent()])
+        env = pommerman.make('PommeFFACompetition-v0',[BaseAgent(),SimpleAgent(),BaseAgent(),SimpleNoBombAgent()])
         return env
     return _thunk
 

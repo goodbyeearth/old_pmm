@@ -23,6 +23,8 @@ def worker(remote, parent_remote, env_fn_wrapper):
             if cmd == 'step':
                 action = act_ex_communication(env._agents[3],env.get_observations()[3])
                 # action = 0
+                if np.random.rand() < 0.5:
+                    data = act_ex_communication(env._agents[1],env.get_observations()[1])
                 whole_action = [5,data,5,action]
                 ob, reward, done, info = env.step(whole_action)
 
@@ -41,7 +43,7 @@ def worker(remote, parent_remote, env_fn_wrapper):
                 r = 0
                 reward_1 = reward[1] + r
                 if done:
-                    random.seed(4)
+                    random.seed(0)
                     ob = env.reset()
                     ob_1 = featurize(ob[1],1)
                     # if reward[1] == -1 and reward[3] == -1:
@@ -51,9 +53,9 @@ def worker(remote, parent_remote, env_fn_wrapper):
                     # else:
                     #     reward_1 = reward[1] * 10
                     reward_1 = reward[1]
-                remote.send((ob_1, reward_1, done, info))
+                remote.send((ob_1, reward_1, done, info,data))
             elif cmd == 'reset':
-                random.seed(4)
+                random.seed(0)
                 ob = env.reset()
                 ob_1 = featurize(ob[1],1)
                 remote.send(ob_1)
@@ -113,8 +115,8 @@ class SubprocVecEnv(VecEnv):
         self._assert_not_closed()
         results = [remote.recv() for remote in self.remotes]
         self.waiting = False
-        obs, rews, dones, infos = zip(*results)
-        return np.stack(obs), np.stack(rews), np.stack(dones), infos
+        obs, rews, dones, infos,act = zip(*results)
+        return np.stack(obs), np.stack(rews), np.stack(dones), infos,np.stack(act)
 
     def reset(self):
         self._assert_not_closed()

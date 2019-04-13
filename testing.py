@@ -28,7 +28,7 @@ def test_CNN(model):
     for i in range(nGame):
         done = False
         # random.seed(2368878)
-        random.seed(4)
+        random.seed(0)
         state = env.reset()
         time_step = 0
         while not done:
