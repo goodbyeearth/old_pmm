@@ -1,3 +1,11 @@
+# 自定义
+parameter/
+test_parameter/
+pommerman/
+.idea
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
