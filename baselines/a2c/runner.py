@@ -29,14 +29,12 @@ class Runner(AbstractEnvRunner):
 
             # Append the experiences
             mb_obs.append(np.copy(self.obs))
-            # mb_actions.append(actions)
+            mb_actions.append(actions)
             mb_values.append(values)
             mb_dones.append(self.dones)
   
             # Take actions in env and look the results
-            # obs, rewards, dones, _ = self.env.step(actions)
-            obs, rewards, dones, _, act = self.env.step(actions)
-            mb_actions.append(actions)
+            obs, rewards, dones, _ = self.env.step(actions)
             self.states = states
             self.dones = dones
             self.obs = obs
