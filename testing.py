@@ -17,7 +17,8 @@ def act_ex_communication(agent,obs):
         return constants.Action.Stop.value
 
 def test_CNN(model):
-    agent_list = [BaseAgent(),BaseAgent(),BaseAgent(),SimpleNoBombAgent()]
+    # agent_list = [BaseAgent(),BaseAgent(),BaseAgent(),SimpleNoBombAgent()]
+    agent_list = [SimpleAgent(),BaseAgent(),SimpleAgent(),SimpleAgent()]
     env = pommerman.make('PommeFFACompetitionFast-v0',agent_list)
     # env.seed(123)
     # random.seed(0)
@@ -28,23 +29,27 @@ def test_CNN(model):
     for i in range(nGame):
         done = False
         # random.seed(2368878)
-        random.seed(4)
+        # random.seed(4)
         state = env.reset()
         time_step = 0
         while not done:
             # env.render()
             # env.save_json('json_file')
+            act0 = act_ex_communication(agent_list[0],state[0])
+            act2 = act_ex_communication(agent_list[2],state[2])
             act3 = act_ex_communication(agent_list[3],state[3])
             # act3 = 0
             act1,_,_,_ = model.act(featurize(state[1],1).reshape(-1, 8, 8, 19))
             # act1,_,_,_ = model.eval_step(featurize(state[1]).reshape(-1,11,11,18))
-            action = [5,act1,5,act3]
-            # action = [0,0,0,act3]
+            # action = [5,act1,5,act3]
+            action = [act0,act1,act2,act3]
             state, reward, done, info = env.step(action)
             time_step += 1
         if reward[1] == 1:
             train_agent_rewards += 1
-        elif reward[3] == 1:
+        elif reward[3] == reward[0] == reward[1] == reward[2]:
+            pass
+        else:
             opponent_rewards += 1
 
     # join_json_state('json_file', ["StopAgent", "StopAgent", "StopAgent", "SimpleAgent"], "00",
