@@ -15,7 +15,7 @@ class PolicyWithValue(object):
     Encapsulates fields and methods for RL policy and value function estimation with shared parameters
     """
 
-    def __init__(self, env, observations, latent, estimate_q=False, vf_latent=None, sess=None, **tensors):
+    def __init__(self, env, observations, keep_probs,latent, estimate_q=False, vf_latent=None, sess=None, **tensors):
         """
         Parameters:
         ----------
@@ -34,6 +34,7 @@ class PolicyWithValue(object):
         """
 
         self.X = observations
+        self.keep_prob = keep_probs
         self.state = tf.constant([])
         self.initial_state = None
         self.__dict__.update(tensors)
@@ -63,9 +64,36 @@ class PolicyWithValue(object):
             self.vf = fc(vf_latent, 'vf', 1)
             self.vf = self.vf[:,0]
 
-    def _evaluate(self, variables, observation, **extra_feed):
+        #使用第二头，这里写的比较死，主要目的是验证是否用多头可以取得不错的效果。
+
+        self.pi2 = fc(latent,scope='pi2',nh=6,init_scale=0.01,init_bias=0.0)
+        u = tf.random_uniform(tf.shape(self.pi2), dtype=self.pi2.dtype)
+        self.action2 =  tf.argmax(self.pi2 - tf.log(-tf.log(u)), axis=-1)
+
+        self.pi3 = fc(latent,scope='pi3',nh=6,init_scale=0.01,init_bias=0.0)
+        u3 = tf.random_uniform(tf.shape(self.pi3), dtype=self.pi3.dtype)
+        self.action3 =  tf.argmax(self.pi3 - tf.log(-tf.log(u3)), axis=-1)
+
+    def step3(self,observation,keep_probs,**extra_feed):
+        a, v, state,  output = self._evaluate([self.action3, self.vf, self.state, self.pi3],
+                                                      observation, keep_probs, **extra_feed)
+        if state.size == 0:
+            state = None
+
+        return a,v,state,output
+
+    def step2(self,observation,keep_probs,**extra_feed):
+        a, v, state,  output = self._evaluate([self.action2, self.vf, self.state, self.pi2],
+                                                      observation, keep_probs, **extra_feed)
+        if state.size == 0:
+            state = None
+
+        return a,v,state,output
+
+
+    def _evaluate(self, variables, observation, keep_probs, **extra_feed):
         sess = self.sess
-        feed_dict = {self.X: adjust_shape(self.X, observation)}
+        feed_dict = {self.X: adjust_shape(self.X, observation),self.keep_prob:keep_probs}
         for inpt_name, data in extra_feed.items():
             if inpt_name in self.__dict__.keys():
                 inpt = self.__dict__[inpt_name]
@@ -74,7 +102,7 @@ class PolicyWithValue(object):
 
         return sess.run(variables, feed_dict)
 
-    def step(self, observation, **extra_feed):
+    def step(self, observation, keep_probs,**extra_feed):
         """
         Compute next action(s) given the observation(s)
 
@@ -90,10 +118,10 @@ class PolicyWithValue(object):
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
 
-        a, v, state, neglogp = self._evaluate([self.action, self.vf, self.state, self.neglogp], observation, **extra_feed)
+        a, v, state, neglogp,output = self._evaluate([self.action, self.vf, self.state, self.neglogp,self.pi], observation, keep_probs,**extra_feed)
         if state.size == 0:
             state = None
-        return a, v, state, neglogp
+        return a, v, state, neglogp, output
 
     def value(self, ob, *args, **kwargs):
         """
@@ -127,6 +155,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
         ob_space = env.observation_space
 
         X = observ_placeholder if observ_placeholder is not None else observation_placeholder(ob_space, batch_size=nbatch)
+        keep_probs = tf.placeholder(tf.float32)
 
         extra_tensors = {}
 
@@ -139,7 +168,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
         encoded_x = encode_observation(ob_space, encoded_x)
 
         with tf.variable_scope('pi', reuse=tf.AUTO_REUSE):
-            policy_latent = policy_network(encoded_x)
+            policy_latent = policy_network(encoded_x,keep_probs)
             if isinstance(policy_latent, tuple):
                 policy_latent, recurrent_tensors = policy_latent
 
@@ -168,10 +197,12 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
         policy = PolicyWithValue(
             env=env,
             observations=X,
+            keep_probs=keep_probs,
             latent=policy_latent,
             vf_latent=vf_latent,
             sess=sess,
             estimate_q=estimate_q,
+
             **extra_tensors
         )
         return policy

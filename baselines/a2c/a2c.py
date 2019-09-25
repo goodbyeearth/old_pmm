@@ -73,6 +73,7 @@ class Model(object):
 
         # 2. Calculate the gradients
         grads = tf.gradients(loss, params)
+
         if max_grad_norm is not None:
             # Clip the gradients (normalize)
             grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
@@ -94,7 +95,7 @@ class Model(object):
             for step in range(len(obs)):
                 cur_lr = lr.value()
 
-            td_map = {train_model.X:obs, A:actions, ADV:advs, R:rewards, LR:cur_lr}
+            td_map = {train_model.X:obs, A:actions, ADV:advs, R:rewards, LR:cur_lr,train_model.keep_prob:1.0}
             if states is not None:
                 td_map[train_model.S] = states
                 td_map[train_model.M] = masks
@@ -112,6 +113,8 @@ class Model(object):
         self.value = step_model.value
         self.initial_state = step_model.initial_state
         self.act = eval_model.step
+        self.act2 = eval_model.step2
+        self.act3 = eval_model.step3
         self.save = functools.partial(tf_util.save_variables, sess=sess)
         self.load = functools.partial(tf_util.load_variables, sess=sess)
         tf.global_variables_initializer().run(session=sess)
@@ -188,6 +191,8 @@ def learn(
 
     set_global_seeds(seed)
     assert save_path is not None
+    if network == 'cnn':
+        network_kwargs['one_dim_bias'] = True
     # Get the nb of env
     nenvs = env.num_envs
     policy = build_policy(env, network, **network_kwargs)
@@ -209,7 +214,7 @@ def learn(
 
     for update in range(1, total_timesteps//nbatch+1):
         # Get mini batch of experiences
-        obs, states, rewards, masks, actions, values = runner.run()
+        obs, states, rewards, masks, actions, values,output = runner.run()
 
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart

@@ -19,48 +19,74 @@ def act_ex_communication(agent,obs):
 
 def t():
     # agent_list = [BaseAgent(),PlayerAgent(),BaseAgent(),SimpleAgent()]
-    agent_list = [SimpleAgent(),SimpleNoBombAgent(),SimpleAgent(),SimpleAgent()]
+    agent_list = [SimpleAgent(),SimpleAgent(),SimpleAgent(),SimpleAgent()]
     # agent_list = [BaseAgent(),BaseAgent(),BaseAgent(),PlayerAgent()]
     env = pommerman.make('PommeFFACompetitionFast-v0',agent_list)
+
+    # env._agent[0].is_alive = False
+    # env._agent[1].is_alive = False
+    # env._agent[2].is_alive = False
+    # env._agent[3].is_alive = False
+    env._agents[0].is_alive = False
+    env._agents[2].is_alive = False
+
+    env._agents[0].restart = False
+    env._agents[1].restart = True
+    env._agents[2].restart = False
+    env._agents[3].restart = True
+
     env.observation_space.shape = (8,8,19)
     env.num_envs=1
-    policy=build_policy(env,'cnn')
+    network_kwargs = {}
+    network_kwargs['one_dim_bias'] = True
+    policy=build_policy(env,'cnn',**network_kwargs)
     sess = tf.InteractiveSession()
     # mod = PPOPolicy(sess, 5, env.action_space, 1, 1, 1)
 
     model = Model(policy=policy,
                   env=env,
                   nsteps=16)
-    model.load('test_parameter/updates315000')
+    # model.load('64')
+    # model.load('initial_parameter/26000_kfac')
+    # model.load('initial_parameter/480000')
+    model.load('parameter/parameter78/updates1')
     # env.seed(123)
     # random.seed(0)
     train_agent_rewards = 0
     opponent_rewards = 0
-    nGame = 10
+    nGame = 100
     reward = [0,0,0,0]
     seed = []
+    time_steps = []
     for i in range(nGame):
         done = False
-        # random.seed(2368878)
-        random.seed(0)
+        # random.seed(4)
         state = env.reset()
         time_step = 0
         while not done:
-            env.render()
+            # env.render()
             # env.save_json('jsonjson')
             act3 = act_ex_communication(agent_list[3],state[3])
-            act2 = act_ex_communication(agent_list[2],state[2])
             act0 = act_ex_communication(agent_list[0],state[0])
-            act1 = act_ex_communication(agent_list[1],state[1])
-            # act1,_,_,_ = model.act(featurize(state[1],1).reshape(-1,8,8,19))
+            act2 = act_ex_communication(agent_list[2], state[2])
+            # act0 = 0
+            # act2 = 0
+            # act3= 0
+            act1,_,_,_ = model.act2(featurize(state[1],1).reshape(-1,8,8,19),keep_probs=1.0)
             # action = [5,act1,5,act3]
-            action = [5,act1,5,act3]
-            # action = [act0,act1,act2,act3]
+            action = [act0,act1,act2,act3]
             state, reward, done, info = env.step(action)
             time_step += 1
-        print(reward)
+        print(reward,time_step)
+        time_steps.append(time_step)
         # join_json_state('jsonjson', ["StopAgent", "StopAgent", "StopAgent", "SimpleAgent"], "00",
         #                 "PommeFFACompetitionFast-v0", info)
+        if reward[1] > 0:
+            train_agent_rewards += 1
+        elif reward[3] > 0:
+            opponent_rewards += 1
+    print("平均值为：%f" %np.mean(time_steps))
+    print("方差为：%f" %np.var(time_steps))
     win_rate = train_agent_rewards/nGame
     lose_rate = opponent_rewards/nGame
     tie_rate = 1 - win_rate - lose_rate
@@ -70,8 +96,7 @@ def t():
 def LSTM(model):
     agent_list = [BaseAgent(),BaseAgent(),BaseAgent(),SimpleAgent()]
     env = pommerman.make('PommeFFACompetitionFast-v0',agent_list)
-    # env.seed(123)
-    # random.seed(0)
+
     train_agent_rewards = 0
     opponent_rewards = 0
     nGame = 50

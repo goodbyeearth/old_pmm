@@ -21,9 +21,13 @@ def worker(remote, parent_remote, env_fn_wrapper):
         while True:
             cmd, data = remote.recv()
             if cmd == 'step':
-                action = act_ex_communication(env._agents[3],env.get_observations()[3])
-                # action = 0
-                whole_action = [5,data,5,action]
+                act3 = act_ex_communication(env._agents[3],env.get_observations()[3])
+                act2 = act_ex_communication(env._agents[2],env.get_observations()[2])
+                act0 = act_ex_communication(env._agents[0],env.get_observations()[0])
+                # act3 = 0
+                # act2 = 0
+                # act0 = 0
+                whole_action = [act0,data,act2,act3]
                 ob, reward, done, info = env.step(whole_action)
 
                 #通过距离来设计reward reshape
@@ -40,8 +44,8 @@ def worker(remote, parent_remote, env_fn_wrapper):
                 ob_1 = featurize(ob[1],1)
                 r = 0
                 reward_1 = reward[1] + r
-                if done:
-                    random.seed(4)
+                if done or env._agents[1].is_alive == False:
+                    # random.seed(4)
                     ob = env.reset()
                     ob_1 = featurize(ob[1],1)
                     # if reward[1] == -1 and reward[3] == -1:
@@ -50,10 +54,11 @@ def worker(remote, parent_remote, env_fn_wrapper):
                     #     reward_1 = reward[1]
                     # else:
                     #     reward_1 = reward[1] * 10
+                    print(reward)
                     reward_1 = reward[1]
                 remote.send((ob_1, reward_1, done, info))
             elif cmd == 'reset':
-                random.seed(4)
+                # random.seed(4)
                 ob = env.reset()
                 ob_1 = featurize(ob[1],1)
                 remote.send(ob_1)

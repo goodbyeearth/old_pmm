@@ -11,3 +11,10 @@
 - `a2c.py`: - Model : class used to initialize the step_model (sampling) and train_model (training)
 	- learn : Main entrypoint for A2C algorithm. Train a policy with given network architecture on a given environment using a2c algorithm.
 - `runner.py`: class used to generates a batch of experiences
+
+- `a2c_collect.py`: 采集样本。python collect_data_distillation.py --alg=a2c --submodule=a2c_collect --env=PongNoFrameskip-v4 --network=cnn --load_path=initial_parameter/updn_data/simple_agent.npz --nsteps=20 --num_timesteps=64000
+- `a2c_compute_FM`: 根据EWC来计算fisher matrix。
+- `a2c_distillation`: 结合几个不同策略智能体的样本，进行策略蒸馏。
+- `a2c_distillation_FM`: 结合EWC进行策略蒸馏。
+- `a2c_kfac_distillation`: 结合kfc进行策略蒸馏。
+- `a2c_kfac_fm`: 根据kfc计算fisher matrix.'collect_data_distillation', '--alg=a2c', '--submodule=a2c_kfac_fm', '--env=PongNoFrameskip-v4','--network=cnn','--load_path=initial_parameter/26000_kfac','--nstep=1','--save_path=fisher','--num_timesteps=5000', '--num_env=1'

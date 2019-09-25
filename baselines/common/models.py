@@ -13,7 +13,7 @@ def register(name):
         return func
     return _thunk
 
-def nature_cnn(unscaled_images, **conv_kwargs):
+def nature_cnn(unscaled_images,keep_probs, **conv_kwargs):
     """
     CNN from Nature paper.
     """
@@ -24,7 +24,9 @@ def nature_cnn(unscaled_images, **conv_kwargs):
     h2 = activ(conv(h, 'c2', nf=64, rf=3, stride=1, init_scale=np.sqrt(2), **conv_kwargs))
     h3 = activ(conv(h2, 'c3', nf=64, rf=3, stride=1, init_scale=np.sqrt(2), **conv_kwargs))
     h3 = conv_to_fc(h3)
-    return activ(fc(h3, 'fc1', nh=512, init_scale=np.sqrt(2)))
+    h4 = activ(fc(h3, 'fc1', nh=512, init_scale=np.sqrt(2)))
+
+    return tf.nn.dropout(h4,keep_prob=keep_probs)
 
 
 @register("mlp")
@@ -61,8 +63,8 @@ def mlp(num_layers=2, num_hidden=64, activation=tf.tanh, layer_norm=False):
 
 @register("cnn")
 def cnn(**conv_kwargs):
-    def network_fn(X):
-        return nature_cnn(X, **conv_kwargs)
+    def network_fn(X,Y):
+        return nature_cnn(X,Y, **conv_kwargs)
     return network_fn
 
 

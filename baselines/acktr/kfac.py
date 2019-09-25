@@ -288,7 +288,8 @@ class KfacOptimizer():
             varlist = tf.trainable_variables()
 
         stats = self.compute_stats(loss_sampled, var_list=varlist)
-        return self.apply_stats(stats)
+        # return self.apply_stats(stats)
+        return stats
 
     def compute_stats(self, loss_sampled, var_list=None):
         varlist = var_list

@@ -343,7 +343,10 @@ def save_variables(save_path, variables=None, sess=None):
     variables = variables or tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
 
     ps = sess.run(variables)
-    save_dict = {v.name: value for v, value in zip(variables, ps)}
+    save_dict = []
+    for v, value in zip(variables,ps):
+        save_dict.append(value)
+    # save_dict = {v.name: value for v, value in zip(variables, ps)}
     dirname = os.path.dirname(save_path)
     if any(dirname):
         os.makedirs(dirname, exist_ok=True)
@@ -354,9 +357,10 @@ def load_variables(load_path, variables=None, sess=None):
     sess = sess or get_session()
     variables = variables or tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
 
-    loaded_params = joblib.load(os.path.expanduser(load_path))
+    loaded_params = joblib.load(os.path.expanduser(load_path))[:14]
     restores = []
     if isinstance(loaded_params, list):
+        variables = variables[:len(loaded_params)]
         assert len(loaded_params) == len(variables), 'number of variables loaded mismatches len(variables)'
         for d, v in zip(loaded_params, variables):
             restores.append(v.assign(d))
