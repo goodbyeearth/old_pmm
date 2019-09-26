@@ -105,7 +105,8 @@ class SubprocVecEnv(VecEnv):
 
         self.remotes[0].send(('get_spaces_spec', None))
         observation_space, action_space, self.spec = self.remotes[0].recv()
-        observation_space.shape = (8,8,19)
+        print(observation_space.shape)
+        observation_space.shape = (11,11,19)
         self.viewer = None
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)
 
