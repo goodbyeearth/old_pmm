@@ -17,6 +17,8 @@ def nature_cnn(unscaled_images, **conv_kwargs):
     """
     CNN from Nature paper.
     """
+    print("kwargs:\n", conv_kwargs)
+
     # scaled_images = tf.cast(unscaled_images, tf.float32) / 255.
     activ = tf.nn.relu
     h = activ(conv(unscaled_images, 'c1', nf=32, rf=3, stride=1, init_scale=np.sqrt(2),

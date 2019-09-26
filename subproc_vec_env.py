@@ -1,5 +1,5 @@
 import multiprocessing as mp
-from pommerman.agents import BaseAgent,SimpleAgent,SimpleNoBombAgent
+from pommerman.agents import BaseAgent,SimpleAgent     #,SimpleNoBombAgent
 import numpy as np
 from baselines.common.vec_env import VecEnv, CloudpickleWrapper
 from gym import spaces

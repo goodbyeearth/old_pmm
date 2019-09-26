@@ -71,12 +71,15 @@ def train(args, extra_args):
 
     # if args.save_video_interval != 0:
     #     env = VecVideoRecorder(env, osp.join(logger.get_dir(), "videos"), record_video_trigger=lambda x: x % args.save_video_interval == 0, video_length=args.save_video_length)
+
+    """cpu,gpu 设置"""
     config = tf.ConfigProto()
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config.gpu_options.allow_growth = True
     num_envs = args.num_env or multiprocessing.cpu_count()
     envs = [make_envs() for _ in range(num_envs)]
     env = SubprocVecEnv(envs)
+
     # if args.network:
     #     alg_kwargs['network'] = args.network
     # else:
@@ -84,6 +87,8 @@ def train(args, extra_args):
     #         alg_kwargs['network'] = get_default_network(env_type)
 
     # print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
+
+    """训练"""
     with tf.Session(config=config):
         model = learn(
             env=env,
@@ -211,6 +216,7 @@ def main(args):
     # configure logger, disable logging in child MPI processes (with rank > 0)
 
     arg_parser = common_arg_parser()
+    """两种参数"""
     args, unknown_args = arg_parser.parse_known_args(args)
     extra_args = parse_cmdline_kwargs(unknown_args)
 
@@ -224,12 +230,18 @@ def main(args):
         logger.configure(format_strs=[])
         rank = MPI.COMM_WORLD.Get_rank()
 
+    """
+    训练，得出 model和env
+    model样子见baseline.ppo2.py 第107行
+    env 格式不清楚
+    """
     model, env = train(args, extra_args)
 
     if args.save_path is not None and rank == 0:
         save_path = osp.expanduser(args.save_path)
         model.save(save_path)
 
+    """跑训练好的模型"""
     if args.play:
         logger.log("Running trained model")
         obs = env.reset()
