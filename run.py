@@ -72,7 +72,7 @@ def train(args, extra_args):
     # if args.save_video_interval != 0:
     #     env = VecVideoRecorder(env, osp.join(logger.get_dir(), "videos"), record_video_trigger=lambda x: x % args.save_video_interval == 0, video_length=args.save_video_length)
 
-    """cpu,gpu 设置"""
+    """多线程设置"""
     config = tf.ConfigProto()
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config.gpu_options.allow_growth = True
@@ -164,11 +164,13 @@ def get_env_type(args):
     return env_type, env_id
 
 
+"""根据环境类型选网络"""
 def get_default_network(env_type):
     if env_type in {'atari', 'retro'}:
         return 'cnn'
     else:
         return 'mlp'
+
 
 def get_alg_module(alg, submodule=None):
     submodule = submodule or alg
@@ -233,7 +235,7 @@ def main(args):
     """
     训练，得出 model和env
     model样子见baseline.ppo2.py 第107行
-    env 格式不清楚
+    env 是多线程的 env
     """
     model, env = train(args, extra_args)
 

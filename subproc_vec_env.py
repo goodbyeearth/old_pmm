@@ -14,17 +14,22 @@ def act_ex_communication(agent,obs):
     else:
         return constants.Action.Stop.value
 
+
 def worker(remote, parent_remote, env_fn_wrapper):
+    """
+    这个work函数运行在 Process 里，把Process里的parent_remote关掉，通信对象是外面的remote。
+    remote就是work_remote
+    """
     parent_remote.close()
+
     env = env_fn_wrapper.x()
     try:
         while True:
             cmd, data = remote.recv()
             if cmd == 'step':
-                act0 = act_ex_communication(env._agents[0],env.get_observations()[0])
-                act2 = act_ex_communication(env._agents[2],env.get_observations()[2])
-                act3 = act_ex_communication(env._agents[3],env.get_observations()[3])
-                # action = 0
+                act0 = act_ex_communication(env._agents[0], env.get_observations()[0])
+                act2 = act_ex_communication(env._agents[2], env.get_observations()[2])
+                act3 = act_ex_communication(env._agents[3], env.get_observations()[3])
                 whole_action = [act0, data, act2, act3]
                 ob, reward, done, info = env.step(whole_action)
 
@@ -39,17 +44,21 @@ def worker(remote, parent_remote, env_fn_wrapper):
                 # reward_ammo = (ob[1]['ammo'] - 1) * 0.1
                 # reward_strength = (ob[1]['blast_strength'] - 2) * 0.1
                 # r = reward_kick + reward_ammo + reward_strength
-                ob_1 = featurize(ob[1],1)
+
+                ob_1 = featurize(ob[1], 1)
+
                 r = 0
                 reward_1 = reward[1] + r
+
                 #在多人条件下，如果我训练的智能体死了，那么就需要提前结束游戏
                 if not done and not env._agents[1].is_alive:
                     reward_1 = -1
                     done = True
+
                 if done:
                     # random.seed(4)
                     ob = env.reset()
-                    ob_1 = featurize(ob[1],1)
+                    ob_1 = featurize(ob[1], 1)
                     # if reward[1] == -1 and reward[3] == -1:
                     #     reward_1 = reward[1]
                     # elif reward[1] == -1:
@@ -57,19 +66,25 @@ def worker(remote, parent_remote, env_fn_wrapper):
                     # else:
                     #     reward_1 = reward[1] * 10
                     reward_1 = reward[1]
+
                 remote.send((ob_1, reward_1, done, info))
+
             elif cmd == 'reset':
                 # random.seed(4)
                 ob = env.reset()
                 ob_1 = featurize(ob[1],1)
                 remote.send(ob_1)
+
             elif cmd == 'render':
                 remote.send(env.render(mode='rgb_array'))
+
             elif cmd == 'close':
                 remote.close()
                 break
+
             elif cmd == 'get_spaces_spec':
                 remote.send((env.observation_space, env.action_space, env.spec))
+
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -94,19 +109,43 @@ class SubprocVecEnv(VecEnv):
         self.nenvs=nenvs = len(env_fns)
         ctx = mp.get_context(context)
         self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(nenvs)])
+        """
+        ps 是一个长度为 nenvs 的进程列表，每一项都是一个新建的Process。
+        每个Process里都在处理worker这个函数，每个worker函数都有两个remote，两个remote之间有管道连接
+        """
         self.ps = [ctx.Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
                    for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
+
+        """
+        进程开关设置
+        """
+
+        """
+        打开进程列表 ps 里的每个 Process
+        """
         for p in self.ps:
             p.daemon = True  # if the main process crashes, we should not cause things to hang
             # with clear_mpi_env_vars():
             p.start()
-        for remote in self.work_remotes:
-            remote.close()
 
+        """
+        关掉当前进程的所有 work_remote，
+        （由于worker函数中关掉了外面的remote）
+        即让 work_remote 在 Process 里跑，remote在当前进程里跑
+        """
+        for remote in self.work_remotes:
+            remote.close()   # 关work_remotes
+
+        """remotes[0]即为在当前进程里跑的remote,向进程Process里的worker_remote查询space信息"""
         self.remotes[0].send(('get_spaces_spec', None))
         observation_space, action_space, self.spec = self.remotes[0].recv()
-        print(observation_space.shape)
+
+        """自定义部分"""
+        print("从worker_remote里得到的space信息")
+        print("observation_space.shape:", observation_space.shape)
+        print("action_space.shape:", action_space.shape)
         observation_space.shape = (11,11,19)
+
         self.viewer = None
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)
 
