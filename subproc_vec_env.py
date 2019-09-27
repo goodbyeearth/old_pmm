@@ -47,7 +47,7 @@ def worker(remote, parent_remote, env_fn_wrapper):
 
                 # print("ob[1]：", ob[1])
 
-                """ob[1]就是原始的字典，featurize之后变成三百多维的向量"""
+                """ob[1]就是原始的字典，做featurize"""
                 ob_1 = featurize(ob[1], 1)
                 # print("len of ob:%d, type of ob:%s" % (len(ob), type(ob)))   # 4, list
                 # print("all key of ob[1]:", ob[1].keys())
@@ -112,9 +112,9 @@ class SubprocVecEnv(VecEnv):
         """
         self.waiting = False
         self.closed = False
-        self.nenvs=nenvs = len(env_fns)
+        self.nenvs = len(env_fns)
         ctx = mp.get_context(context)
-        self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(nenvs)])
+        self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(self.nenvs)])
         """
         ps 是一个长度为 nenvs 的进程列表，每一项都是一个新建的Process。
         每个Process里都在处理worker这个函数，每个worker函数都有两个remote，两个remote之间有管道连接
