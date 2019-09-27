@@ -41,8 +41,11 @@ def featurize(obs,player):
     # maps.append(board == 3)
     maps.append(obs['bomb_blast_strength'])
     maps.append(obs['bomb_life'])
-    player = player + 10
+
+    player = player + 10        # 我的智能体在棋盘的编号
     maps.append(board == player)
+
+    """标量映射为11*11的矩阵"""
     maps.append(np.full(board.shape, obs['ammo']))
     maps.append(np.full(board.shape, obs['blast_strength']))
     maps.append(np.full(board.shape, obs['can_kick']))
@@ -59,8 +62,12 @@ def featurize(obs,player):
     for i in [0,1,2,4,5,6,7,9]:
         maps.append(board == i)
 
+    """标量映射为11*11的矩阵"""
     maps.append(np.full(board.shape,obs['step_count']/799))
 
+    # result = np.stack(maps, axis=2)
+    # print("After stack, shape:", result.shape)
+    # TODO:axis好像有问题
     return np.stack(maps, axis=2)
 
 def available_action(state):

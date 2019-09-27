@@ -45,7 +45,13 @@ def worker(remote, parent_remote, env_fn_wrapper):
                 # reward_strength = (ob[1]['blast_strength'] - 2) * 0.1
                 # r = reward_kick + reward_ammo + reward_strength
 
+                # print("ob[1]：", ob[1])
+
+                """ob[1]就是原始的字典，featurize之后变成三百多维的向量"""
                 ob_1 = featurize(ob[1], 1)
+                # print("len of ob:%d, type of ob:%s" % (len(ob), type(ob)))   # 4, list
+                # print("all key of ob[1]:", ob[1].keys())
+                # print("after featurize, ob[1] shape:", ob_1.shape)     # 11*11*19
 
                 r = 0
                 reward_1 = reward[1] + r
@@ -72,7 +78,7 @@ def worker(remote, parent_remote, env_fn_wrapper):
             elif cmd == 'reset':
                 # random.seed(4)
                 ob = env.reset()
-                ob_1 = featurize(ob[1],1)
+                ob_1 = featurize(ob[1], 1)
                 remote.send(ob_1)
 
             elif cmd == 'render':
@@ -140,11 +146,11 @@ class SubprocVecEnv(VecEnv):
         self.remotes[0].send(('get_spaces_spec', None))
         observation_space, action_space, self.spec = self.remotes[0].recv()
 
-        """自定义部分"""
+        """自定义部分,对observation重新定shape"""
         print("从worker_remote里得到的space信息")
         print("observation_space.shape:", observation_space.shape)
         print("action_space.shape:", action_space.shape)
-        observation_space.shape = (11,11,19)
+        observation_space.shape = (11, 11, 19)
 
         self.viewer = None
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)

@@ -54,6 +54,8 @@ def make_envs():
     def _thunk():
         # env = pommerman.make('PommeFFACompetition-v0',[BaseAgent(),BaseAgent(),BaseAgent(),SimpleNoBombAgent()])
         env = pommerman.make('PommeFFACompetition-v0',[SimpleAgent(),BaseAgent(),SimpleAgent(),SimpleAgent()])
+        # env = pommerman.make('PommeRadio-v2', [SimpleAgent(), BaseAgent(), SimpleAgent(), SimpleAgent()])
+
         return env
     return _thunk
 
