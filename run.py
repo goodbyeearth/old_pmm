@@ -91,17 +91,27 @@ def train(args, extra_args):
     # print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
 
     """训练"""
-    with tf.Session(config=config):
-        model = learn(
-            env=env,
-            seed=seed,
-            total_timesteps=total_timesteps,
-            # **alg_kwargs
-            nsteps=args.nsteps,
-            network=args.network,
-            save_path=args.save_path,
-            **extra_args
-        )
+    # with tf.Session(config=config):
+    #     model = learn(
+    #         env=env,
+    #         seed=seed,
+    #         total_timesteps=total_timesteps,
+    #         # **alg_kwargs
+    #         nsteps=args.nsteps,
+    #         network=args.network,
+    #         save_path=args.save_path,
+    #         **extra_args
+    #     )
+    model = learn(
+        env=env,
+        seed=seed,
+        total_timesteps=total_timesteps,
+        # **alg_kwargs
+        nsteps=args.nsteps,
+        network=args.network,
+        save_path=args.save_path,
+        **extra_args
+    )
 
     return model, env
 
